@@ -7,5 +7,6 @@ handle["/"] = requestHandlers.start;
 handle["/start"]= requestHandlers.start;
 handle["/upload"] = requestHandlers.upload;
 handle["/removeConditionField"] = requestHandlers.removeConditionField;
+handle["/checkInventoryStorage"] =requestHandlers.checkInventoryStorage;
 
 server.start(router.route,handle);
