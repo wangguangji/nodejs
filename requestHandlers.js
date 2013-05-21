@@ -12,6 +12,9 @@ var pool  = mysql.createPool({
 function start(response,request){
 	console.log("Request handler 'start' was called .");
     response.writeHead(200, {"Content-Type": "text/html"});
+     var array = "1,2".split(",");
+     console.log(array.length);
+    console.log("array[0]  %s ; array[1] %s ",array[0],array[1]);
     response.write("start ");
     response.end();
 }
@@ -55,7 +58,7 @@ function checkInventoryStorage(response,request){
 
     var databaseName = querystring.parse(query)["database"];
 
-    function callbace(){
+    function callback(){
             response.writeHead(200,{"Content-Type":"text/html"});  
             response.write("good!" +resultstr);
             response.end(); 
@@ -71,23 +74,32 @@ function checkInventoryStorage(response,request){
                   for (var i=0;i<rows.length ;i++ ){
                     var storeId = rows[i].id ;
                
-                    var sql = "SELECT GROUP_CONCAT(quantity) as quantity , skuId FROM ( SELECT SKU_ID AS skuId ,SUM(change_QUANTITY) AS quantity,  2  AS TYPE  FROM inventory_storage_change "+
+                    var sql = "SELECT GROUP_CONCAT(quantity) as quantity , skuId ,storeId FROM ( SELECT SKU_ID AS skuId ,SUM(change_QUANTITY) AS quantity,  2  AS TYPE ,store_id as storeId  FROM inventory_storage_change "+
                                 "WHERE store_id=? GROUP BY sku_id "+
                                 "UNION ALL " +
-                                " SELECT  SUM(quantity ) quantity , SKU_ID AS skuId ,   1  AS TYPE  FROM  inventory_storage "+
-                                " WHERE store_id = ?  GROUP BY sku_id ) as t GROUP BY skuId  ";
+                                " SELECT  SKU_ID AS skuId , SUM(quantity ) quantity ,  1  AS TYPE ,store_id as storeId FROM  inventory_storage "+
+                                " WHERE store_id=?  GROUP BY sku_id ) as t GROUP BY skuId  ";
 
                                 connection.query(sql,[storeId,storeId],function (err,changerows){
                                       for (var j=0;j<changerows.length ;j++ ){
                                         var quantity =changerows[j].quantity; 
                                         var skuId = changerows[j].skuId;
-                                        var array = quantity.split(",");
-                                        if(array[0]!=array[1]){
-                                            resultstr+="storeId ="+storeId +"skuId="+skuId ;  
+                                        var array = quantity.split(","); 
+                                        var storeIdstr =changerows[j].storeId;
+
+                                        if(array.length===2 && array[0]!=array[1]){
+                                            console.log("array[0] =  %s array[1] = %s  array is length %s ",array[0],array[1],array.length);
+                                            resultstr+="storeId =  "+storeIdstr +" skuId =   "+skuId +"\n";  
                                         }
                                       }
-                                      console.log(length+"===length");
+                                     
                                       length --;
+                                       console.log(length+"===length");
+                                      if(length===1){
+                                              response.writeHead(200,{"Content-Type":"text/html"});  
+                                              response.write("good!" +resultstr);
+                                              response.end(); 
+                                      }
                                     console.log("changerows"+changerows.length);
                                 });
                   }               
